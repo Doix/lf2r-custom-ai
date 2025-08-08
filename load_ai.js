@@ -112,33 +112,47 @@ const nameMap = {
   x: "x",
   y: "y",
   zwidth: "Dh",
+
+  zwdith1: "li",
+  zwdith2: "ri",
+  num: "index",
+  blink: "ni",
 };
 
 const getProxiedObject = (() => {
   const proxyCache = new WeakMap();
 
   function wrap(target, mapping) {
-    if (target === null || typeof target !== 'object') return target;
+    if (target === null || typeof target !== "object") return target;
     if (proxyCache.has(target)) return proxyCache.get(target);
 
     const handler = {
       get(obj, prop, receiver) {
         if (prop === Symbol.iterator) {
-          return function* () {
+          return (function* () {
             for (const value of obj) {
               yield wrap(value, mapping);
             }
-          }();
+          })();
         }
-        if (prop === 'state') {
-          const dataFileProp = mapping.data;
-          const frameProp = mapping.frame;
-          
-          if (obj && obj[dataFileProp] && obj[dataFileProp].f && obj[frameProp] !== undefined && obj[dataFileProp].f[obj[frameProp]]) {
+        const dataFileProp = mapping.data;
+        const frameProp = mapping.frame;
+        if (prop === "state") {
+          if (
+            obj &&
+            obj[dataFileProp] &&
+            obj[dataFileProp].f &&
+            obj[frameProp] !== undefined &&
+            obj[dataFileProp].f[obj[frameProp]]
+          ) {
             const stateValue = obj[dataFileProp].f[obj[frameProp]].state;
             return wrap(stateValue, mapping);
           }
-          return undefined;
+        } else if (prop === "id") {
+          if (obj && obj[dataFileProp]) {
+            const idValue = obj[dataFileProp].id;
+            return wrap(idValue, mapping);
+          }
         }
 
         const mangledProp = mapping[prop] || prop;
@@ -146,19 +160,19 @@ const getProxiedObject = (() => {
         return wrap(value, mapping);
       },
       set(obj, prop, value, receiver) {
-        if (prop === 'state') {
+        if (prop === "state") {
           return true;
         }
         const mangledProp = mapping[prop] || prop;
         return Reflect.set(obj, mangledProp, value, receiver);
       },
       has(obj, prop) {
-        if (prop === 'state') {
+        if (prop === "state") {
           return true;
         }
         const mangledProp = mapping[prop] || prop;
         return Reflect.has(obj, mangledProp);
-      }
+      },
     };
 
     const proxy = new Proxy(target, handler);
@@ -225,7 +239,7 @@ const aiHelpers = {
   DdJ(self) {
     self.DdJ = 3;
   },
-  abs: Math.abs
+  abs: Math.abs,
 };
 
 aiHelpers.resetInput = (self) => {
@@ -242,9 +256,9 @@ function createAIExecutionContext(selfEntity) {
   const context = {};
   for (const key in aiHelpers) {
     const helper = aiHelpers[key];
-    if (typeof helper !== 'function') continue;
+    if (typeof helper !== "function") continue;
 
-    if (key === 'abs') {
+    if (key === "abs") {
       context[key] = helper;
     } else {
       context[key] = (...args) => helper(selfEntity, ...args);
@@ -256,32 +270,38 @@ function createAIExecutionContext(selfEntity) {
 const customAIs = {};
 
 async function loadCustomAI(id) {
-    try {
-        const resp = await fetch(`./_res_ai/${id}.js`, {
-            cache: "no-store"
-        });
-        if (!resp.ok) {
-            customAIs[id] = null;
-            return;
-        }
+  try {
+    const resp = await fetch(`./_res_ai/${id}.js`, {
+      cache: "no-store",
+    });
+    if (!resp.ok) {
+      customAIs[id] = null;
+      return;
+    }
 
-        let code = await resp.text();
-        const definedFunctions = [];
+    let code = await resp.text();
+    const definedFunctions = [];
 
-        const transformedCode = code
-            .replace(/function\s+([a-zA-Z0-9_]+)\s*\(/g, (match, name) => {
-                if (!definedFunctions.includes(name)) definedFunctions.push(name);
-                return `const ${name} = function(`;
-            })
-            .replace(/^([a-zA-Z0-9_]+)\s*=\s*function/gm, (match, name) => {
-                if (!definedFunctions.includes(name)) definedFunctions.push(name);
-                return `const ${name} = function`;
-            });
+    const transformedCode = code
+      .replace(/function\s+([a-zA-Z0-9_]+)\s*\(/g, (match, name) => {
+        if (!definedFunctions.includes(name)) definedFunctions.push(name);
+        return `const ${name} = function(`;
+      })
+      .replace(/^([a-zA-Z0-9_]+)\s*=\s*function/gm, (match, name) => {
+        if (!definedFunctions.includes(name)) definedFunctions.push(name);
+        return `const ${name} = function`;
+      });
 
-        const contextKeys = Object.keys(aiHelpers);
+    const contextKeys = Object.keys(aiHelpers);
 
-        const factoryBody = `
+    // blah refactor the whole namespacing shit and just pollute the global scope, for now do this
+    const factoryBody = `
             let target = initialTarget;
+
+            const q = gameInstance.Ct;
+            const bg_zwidth1 = T7ES.vt[q].li;
+            const bg_zwidth2 = T7ES.vt[q].ri;
+            const bg_width = T7ES.vt[q].w;
 
             const loadTarget = (index) => {
                 target = gameInstance.objects[index];
@@ -294,24 +314,30 @@ async function loadCustomAI(id) {
 
             ${transformedCode}
             
-            return { setTarget, ${definedFunctions.join(', ')} };
+            return { setTarget, ${definedFunctions.join(", ")} };
         `;
 
-        const factory = new Function('self', 'initialTarget', 'gameInstance', ...contextKeys, factoryBody);
+    const factory = new Function(
+      "self",
+      "initialTarget",
+      "gameInstance",
+      ...contextKeys,
+      factoryBody
+    );
 
-        customAIs[id] = {
-            factory: factory,
-            definedFunctions: definedFunctions,
-            executionCache: new WeakMap()
-        };
-    } catch (error) {
-        console.error(`Error compiling AI Sandbox for ID ${id}:`, error);
-        customAIs[id] = null;
-    }
+    customAIs[id] = {
+      factory: factory,
+      definedFunctions: definedFunctions,
+      executionCache: new WeakMap(),
+    };
+  } catch (error) {
+    console.error(`Error compiling AI Sandbox for ID ${id}:`, error);
+    customAIs[id] = null;
+  }
 }
 
 const originalN0 = TIJj.prototype.n0;
-TIJj.prototype.n0 = async function(...args) {
+TIJj.prototype.n0 = async function (...args) {
   await loadCustomAI(this.id);
   return await originalN0.apply(this, args);
 };
@@ -319,34 +345,46 @@ TIJj.prototype.n0 = async function(...args) {
 const originalTI2f = TI2f;
 const originalCr0f = Cr0f;
 
-function runAIFunction(aiInfo, functionName, gameInstance, selfEntity, targetEntity, originalArgs) {
-    if (!aiInfo || typeof aiInfo.factory !== 'function') return;
+function runAIFunction(
+  aiInfo,
+  functionName,
+  gameInstance,
+  selfEntity,
+  targetEntity,
+  originalArgs
+) {
+  if (!aiInfo || typeof aiInfo.factory !== "function") return;
 
-    let aiInstance = aiInfo.executionCache.get(selfEntity);
+  let aiInstance = aiInfo.executionCache.get(selfEntity);
 
-    if (!aiInstance) {
-        const executionContext = createAIExecutionContext(selfEntity);
-        const contextValues = Object.values(executionContext);
-        
-        aiInstance = aiInfo.factory.apply(null, [selfEntity, targetEntity, gameInstance, ...contextValues]);
-        aiInfo.executionCache.set(selfEntity, aiInstance);
-    } else {
-        aiInstance.setTarget(targetEntity);
-    }
-    
-    const aiFunction = aiInstance[functionName];
+  if (!aiInstance) {
+    const executionContext = createAIExecutionContext(selfEntity);
+    const contextValues = Object.values(executionContext);
 
-    if (typeof aiFunction === 'function') {
-        const newArgs = [gameInstance, ...Array.from(originalArgs).slice(1)];
-        return aiFunction.apply(null, newArgs);
-    }
+    aiInstance = aiInfo.factory.apply(null, [
+      selfEntity,
+      targetEntity,
+      gameInstance,
+      ...contextValues,
+    ]);
+    aiInfo.executionCache.set(selfEntity, aiInstance);
+  } else {
+    aiInstance.setTarget(targetEntity);
+  }
+
+  const aiFunction = aiInstance[functionName];
+
+  if (typeof aiFunction === "function") {
+    const newArgs = [gameInstance, ...Array.from(originalArgs).slice(1)];
+    return aiFunction.apply(null, newArgs);
+  }
 }
 
-TI2f = function(t, i) {
+TI2f = function (t, i) {
   const id = t.qt[i].q.id;
   const aiInfo = customAIs[id];
 
-  if (aiInfo && aiInfo.definedFunctions.includes('id')) {
+  if (aiInfo && aiInfo.definedFunctions.includes("id")) {
     try {
       const proxiedGameInstance = getProxiedObject(t, nameMap);
       const selfEntity = proxiedGameInstance.objects[i];
@@ -355,22 +393,29 @@ TI2f = function(t, i) {
       if (!selfEntity) {
         return originalTI2f.apply(this, arguments);
       }
-      
-      return runAIFunction(aiInfo, 'id', proxiedGameInstance, selfEntity, targetEntity, arguments);
+
+      return runAIFunction(
+        aiInfo,
+        "id",
+        proxiedGameInstance,
+        selfEntity,
+        targetEntity,
+        arguments
+      );
     } catch (error) {
       console.error(`Error in custom AI (id) for entity ${id}:`, error);
       return;
     }
   }
-  
+
   return originalTI2f.apply(this, arguments);
 };
 
-Cr0f = function(game, targetNum, objectNum, t, h, o, a, n, r, i) {
+Cr0f = function (game, targetNum, objectNum, t, h, o, a, n, r, i) {
   const entityId = game.qt[objectNum].q.id;
   const aiInfo = customAIs[entityId];
 
-  if (aiInfo && aiInfo.definedFunctions.includes('ego')) {
+  if (aiInfo && aiInfo.definedFunctions.includes("ego")) {
     try {
       const proxiedGameInstance = getProxiedObject(game, nameMap);
       const selfEntity = proxiedGameInstance.objects[objectNum];
@@ -379,13 +424,20 @@ Cr0f = function(game, targetNum, objectNum, t, h, o, a, n, r, i) {
       if (!selfEntity) {
         return originalCr0f.apply(this, arguments);
       }
-      
-      return runAIFunction(aiInfo, 'ego', proxiedGameInstance, selfEntity, targetEntity, arguments);
+
+      return runAIFunction(
+        aiInfo,
+        "ego",
+        proxiedGameInstance,
+        selfEntity,
+        targetEntity,
+        arguments
+      );
     } catch (error) {
       console.error(`Error in custom AI (ego) for entity ${entityId}:`, error);
       return true;
     }
   }
-  
+
   return originalCr0f.apply(this, arguments);
 };
