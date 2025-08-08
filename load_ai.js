@@ -1,31 +1,33 @@
 const nameMap = {
   objects: "qt",
-  data_file: "q",
+  data: "q",
   exists: "Pt",
 
   up: "dt",
   down: "A0",
-  jump: "ft",
-  defend: "o1",
+  J: "ft",
+  D: "o1",
+  A: "attack",
   holding_up: "qi",
   holding_down: "t1",
   holding_left: "i1",
   holding_right: "e1",
-  holding_attack: "ti",
-  holding_jump: "s1",
-  holding_defend: "h1",
+  holding_a: "ti",
+  holding_j: "s1",
+  holding_d: "h1",
 
-  drj: "B1",
-  dlj: "M1",
-  duj: "T1",
-  dvj: "L1",
-  dra: "v1",
-  dla: "A1",
-  dua: "I1",
-  dva: "X1",
-  dja: "C1",
+  DrJ: "B1",
+  Dlj: "M1",
+  DuJ: "T1",
+  DdJ: "L1",
+  DrA: "v1",
+  DlA: "A1",
+  DuA: "I1",
+  DdA: "X1",
+  DJA: "C1",
 
   frame: "Cc",
+  team: "group",
 
   aaction: "Yh",
   act: "Ni",
@@ -114,7 +116,7 @@ const nameMap = {
 
 const getProxiedObject = (() => {
   const proxyCache = new WeakMap();
-  
+
   function wrap(target, mapping) {
     if (target === null || typeof target !== 'object') return target;
     if (proxyCache.has(target)) return proxyCache.get(target);
@@ -126,17 +128,34 @@ const getProxiedObject = (() => {
             for (const value of obj) {
               yield wrap(value, mapping);
             }
-          }(); 
+          }();
         }
+        if (prop === 'state') {
+          const dataFileProp = mapping.data;
+          const frameProp = mapping.frame;
+          
+          if (obj && obj[dataFileProp] && obj[dataFileProp].f && obj[frameProp] !== undefined && obj[dataFileProp].f[obj[frameProp]]) {
+            const stateValue = obj[dataFileProp].f[obj[frameProp]].state;
+            return wrap(stateValue, mapping);
+          }
+          return undefined;
+        }
+
         const mangledProp = mapping[prop] || prop;
         const value = Reflect.get(obj, mangledProp, receiver);
-        return wrap(value, mapping); // Recursively proxy
+        return wrap(value, mapping);
       },
       set(obj, prop, value, receiver) {
+        if (prop === 'state') {
+          return true;
+        }
         const mangledProp = mapping[prop] || prop;
         return Reflect.set(obj, mangledProp, value, receiver);
       },
       has(obj, prop) {
+        if (prop === 'state') {
+          return true;
+        }
         const mangledProp = mapping[prop] || prop;
         return Reflect.has(obj, mangledProp);
       }
@@ -150,74 +169,223 @@ const getProxiedObject = (() => {
   return wrap;
 })();
 
+const aiHelpers = {
+  left(self, a = 1, b = 0) {
+    self.left = a;
+    self.holding_left = b;
+  },
+  right(self, a = 1, b = 0) {
+    self.right = a;
+    self.holding_right = b;
+  },
+  up(self, a = 1, b = 0) {
+    self.up = a;
+    self.holding_up = b;
+  },
+  down(self, a = 1, b = 0) {
+    self.down = a;
+    self.holding_down = b;
+  },
+  J(self, a = 1, b = 0) {
+    self.J = a;
+    self.holding_j = b;
+  },
+  D(self, a = 1, b = 0) {
+    self.D = a;
+    self.holding_d = b;
+  },
+  A(self, a = 1, b = 0) {
+    self.A = a;
+    self.holding_a = b;
+  },
+  DJA(self) {
+    self.DJA = 3;
+  },
+  DrA(self) {
+    self.DrA = 3;
+  },
+  DlA(self) {
+    self.DlA = 3;
+  },
+  DuA(self) {
+    self.DuA = 3;
+  },
+  DdA(self) {
+    self.DdA = 3;
+  },
+  DrJ(self) {
+    self.DrJ = 3;
+  },
+  DlJ(self) {
+    self.DlJ = 3;
+  },
+  DuJ(self) {
+    self.DuJ = 3;
+  },
+  DdJ(self) {
+    self.DdJ = 3;
+  },
+  abs: Math.abs
+};
+
+aiHelpers.resetInput = (self) => {
+  aiHelpers.up(self, 0, 0);
+  aiHelpers.down(self, 0, 0);
+  aiHelpers.left(self, 0, 0);
+  aiHelpers.right(self, 0, 0);
+  aiHelpers.J(self, 0, 0);
+  aiHelpers.D(self, 0, 0);
+  aiHelpers.A(self, 0, 0);
+};
+
+function createAIExecutionContext(selfEntity) {
+  const context = {};
+  for (const key in aiHelpers) {
+    const helper = aiHelpers[key];
+    if (typeof helper !== 'function') continue;
+
+    if (key === 'abs') {
+      context[key] = helper;
+    } else {
+      context[key] = (...args) => helper(selfEntity, ...args);
+    }
+  }
+  return context;
+}
+
 const customAIs = {};
 
 async function loadCustomAI(id) {
-  try {
-    const resp = await fetch(`./_res_ai/${id}.js`, { cache: "no-store" });
-    if (!resp.ok) return;
+    try {
+        const resp = await fetch(`./_res_ai/${id}.js`, {
+            cache: "no-store"
+        });
+        if (!resp.ok) {
+            customAIs[id] = null;
+            return;
+        }
 
-    let code = await resp.text();
-    const ns = {};
+        let code = await resp.text();
+        const definedFunctions = [];
 
-    // i'm a real programmer, honest
-    const transformedCode = code.replace(
-      /function\s+([a-zA-Z0-9_]+)\s*\(/g,
-      "ns.$1 = function("
-    );
-    new Function("ns", transformedCode)(ns);
-    customAIs[id] = ns;
-    console.log(
-      `Loaded custom AI for ID ${id}. Found functions:`,
-      Object.keys(ns).join(", ")
-    );
-  } catch (error) {
-    console.error(error);
-    customAIs[id] = null;
-  }
+        const transformedCode = code
+            .replace(/function\s+([a-zA-Z0-9_]+)\s*\(/g, (match, name) => {
+                if (!definedFunctions.includes(name)) definedFunctions.push(name);
+                return `const ${name} = function(`;
+            })
+            .replace(/^([a-zA-Z0-9_]+)\s*=\s*function/gm, (match, name) => {
+                if (!definedFunctions.includes(name)) definedFunctions.push(name);
+                return `const ${name} = function`;
+            });
+
+        const contextKeys = Object.keys(aiHelpers);
+
+        const factoryBody = `
+            let target = initialTarget;
+
+            const loadTarget = (index) => {
+                target = gameInstance.objects[index];
+                return gameInstance.exists[index] ? gameInstance.objects[index].data.type : -1;
+            };
+
+            const setTarget = (newTarget) => {
+                target = newTarget;
+            };
+
+            ${transformedCode}
+            
+            return { setTarget, ${definedFunctions.join(', ')} };
+        `;
+
+        const factory = new Function('self', 'initialTarget', 'gameInstance', ...contextKeys, factoryBody);
+
+        customAIs[id] = {
+            factory: factory,
+            definedFunctions: definedFunctions,
+            executionCache: new WeakMap()
+        };
+    } catch (error) {
+        console.error(`Error compiling AI Sandbox for ID ${id}:`, error);
+        customAIs[id] = null;
+    }
 }
 
 const originalN0 = TIJj.prototype.n0;
-TIJj.prototype.n0 = async function (...args) {
+TIJj.prototype.n0 = async function(...args) {
   await loadCustomAI(this.id);
   return await originalN0.apply(this, args);
 };
 
-// --- PATCHING ---
-
 const originalTI2f = TI2f;
 const originalCr0f = Cr0f;
 
-TI2f = function (t, i) {
-  const id = t.qt[i].q.id;
+function runAIFunction(aiInfo, functionName, gameInstance, selfEntity, targetEntity, originalArgs) {
+    if (!aiInfo || typeof aiInfo.factory !== 'function') return;
 
-  const aiFunction = customAIs[id]?.id;
-  if (typeof aiFunction === "function") {
-    const proxiedGameInstance = getProxiedObject(t, nameMap);
-    const newArgs = [proxiedGameInstance, i];
+    let aiInstance = aiInfo.executionCache.get(selfEntity);
+
+    if (!aiInstance) {
+        const executionContext = createAIExecutionContext(selfEntity);
+        const contextValues = Object.values(executionContext);
+        
+        aiInstance = aiInfo.factory.apply(null, [selfEntity, targetEntity, gameInstance, ...contextValues]);
+        aiInfo.executionCache.set(selfEntity, aiInstance);
+    } else {
+        aiInstance.setTarget(targetEntity);
+    }
+    
+    const aiFunction = aiInstance[functionName];
+
+    if (typeof aiFunction === 'function') {
+        const newArgs = [gameInstance, ...Array.from(originalArgs).slice(1)];
+        return aiFunction.apply(null, newArgs);
+    }
+}
+
+TI2f = function(t, i) {
+  const id = t.qt[i].q.id;
+  const aiInfo = customAIs[id];
+
+  if (aiInfo && aiInfo.definedFunctions.includes('id')) {
     try {
-      return aiFunction.apply(this, newArgs);
+      const proxiedGameInstance = getProxiedObject(t, nameMap);
+      const selfEntity = proxiedGameInstance.objects[i];
+      const targetEntity = undefined;
+
+      if (!selfEntity) {
+        return originalTI2f.apply(this, arguments);
+      }
+      
+      return runAIFunction(aiInfo, 'id', proxiedGameInstance, selfEntity, targetEntity, arguments);
     } catch (error) {
-      console.error(error);
+      console.error(`Error in custom AI (id) for entity ${id}:`, error);
       return;
     }
   }
+  
   return originalTI2f.apply(this, arguments);
 };
 
-Cr0f = function (e, s, q, t, h, o, a, n, r, i) {
-  const entityId = e.qt[q].q.id;
-  const aiFunction = customAIs[entityId]?.ego;
-  if (typeof aiFunction === "function") {
-    const proxiedGameInstance = getProxiedObject(e, nameMap);
-    const newArgs = [proxiedGameInstance, s, q, t, h, o, a, n, r, i];
+Cr0f = function(game, targetNum, objectNum, t, h, o, a, n, r, i) {
+  const entityId = game.qt[objectNum].q.id;
+  const aiInfo = customAIs[entityId];
+
+  if (aiInfo && aiInfo.definedFunctions.includes('ego')) {
     try {
-      return aiFunction.apply(this, newArgs);
+      const proxiedGameInstance = getProxiedObject(game, nameMap);
+      const selfEntity = proxiedGameInstance.objects[objectNum];
+      const targetEntity = proxiedGameInstance.objects[targetNum];
+
+      if (!selfEntity) {
+        return originalCr0f.apply(this, arguments);
+      }
+      
+      return runAIFunction(aiInfo, 'ego', proxiedGameInstance, selfEntity, targetEntity, arguments);
     } catch (error) {
-      console.error(error);
+      console.error(`Error in custom AI (ego) for entity ${entityId}:`, error);
       return true;
     }
   }
-
+  
   return originalCr0f.apply(this, arguments);
 };
