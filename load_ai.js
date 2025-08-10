@@ -27,7 +27,9 @@ const nameMap = {
   DJA: "C1",
 
   frame: "Cc",
+  frame1: "Cc",
   team: "group",
+  frames: "f",
 
   aaction: "Yh",
   act: "Ni",
@@ -123,6 +125,20 @@ const nameMap = {
   blink: "ni",
 
   ctimer: 'nd',
+  max_hp: 'si',
+  bdefend_counter: 'dd',
+
+  stage_clear: "$i",
+  difficulty: "At",
+
+  bdys: 'Fo',
+  bdy_count: 'Eo',
+
+  itrs: 'So',
+  itr_count: 'bo',
+
+  weapon_type: "b1",
+  mode: "Ki",
 };
 
 const getProxiedObject = (() => {
@@ -164,10 +180,22 @@ const getProxiedObject = (() => {
             const typeValue = obj[dataFileProp].type;
             return wrap(typeValue, mapping);
           }
+        } else if (prop === "bdefend") {
+          if (obj) {
+            const bdefendValue = obj.bdefend !== undefined ? obj.bdefend : obj.bdefend_counter;
+            return bdefendValue;
+          }
         }
 
         const mangledProp = mapping[prop] || prop;
         const value = Reflect.get(obj, mangledProp, receiver);
+
+        if (value === undefined) {
+          if (typeof prop !== 'symbol' && prop !== 'then') {
+            console.warn(`[AI Proxy] Property '${String(prop)}' not found on object.`);
+          }
+        }
+
         return wrap(value, mapping);
       },
       set(obj, prop, value, receiver) {
@@ -313,6 +341,10 @@ async function loadCustomAI(id) {
             const bg_zwidth1 = T7ES.vt[q].li;
             const bg_zwidth2 = T7ES.vt[q].ri;
             const bg_width = T7ES.vt[q].w;
+            const difficulty = gameInstance.difficulty;
+            const stage_clear = gameInstance.stage_clear;
+            const game = gameInstance;
+            const mode = gameInstance.mode;
 
             const loadTarget = (index) => {
                 target = gameInstance.objects[index];
