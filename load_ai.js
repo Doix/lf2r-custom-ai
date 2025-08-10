@@ -113,6 +113,10 @@ const nameMap = {
   y: "y",
   zwidth: "Dh",
 
+  x_velocity: "xi",
+  y_velocity: "zi",
+  z_velocity: "Zi",
+
   zwdith1: "li",
   zwdith2: "ri",
   num: "index",
@@ -152,6 +156,11 @@ const getProxiedObject = (() => {
           if (obj && obj[dataFileProp]) {
             const idValue = obj[dataFileProp].id;
             return wrap(idValue, mapping);
+          }
+        } else if (prop === "type") {
+          if (obj && obj[dataFileProp]) {
+            const typeValue = obj[dataFileProp].type;
+            return wrap(typeValue, mapping);
           }
         }
 
