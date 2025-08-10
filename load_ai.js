@@ -121,6 +121,8 @@ const nameMap = {
   zwdith2: "ri",
   num: "index",
   blink: "ni",
+
+  ctimer: 'nd',
 };
 
 const getProxiedObject = (() => {
