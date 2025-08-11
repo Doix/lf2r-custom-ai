@@ -1,3 +1,5 @@
+const DEBUG_AI = 0;
+
 const nameMap = {
   objects: "qt",
   data: "q",
@@ -139,6 +141,10 @@ const nameMap = {
 
   weapon_type: "b1",
   mode: "Ki",
+  clone: "parent",
+
+  elapsed_time: "Li",
+  weapon_held: "V1",
 };
 
 const getProxiedObject = (() => {
@@ -190,7 +196,7 @@ const getProxiedObject = (() => {
         const mangledProp = mapping[prop] || prop;
         const value = Reflect.get(obj, mangledProp, receiver);
 
-        if (value === undefined) {
+        if (DEBUG_AI && value === undefined) {
           if (typeof prop !== 'symbol' && prop !== 'then') {
             console.warn(`[AI Proxy] Property '${String(prop)}' not found on object.`);
           }
@@ -308,6 +314,45 @@ function createAIExecutionContext(selfEntity) {
 
 const customAIs = {};
 
+async function preprocessIncludes(code, basePath = './_res_ai/') {
+    const includeRegex = /include\s*\(\s*"([^"]+)"\s*\);?/gm;
+    const includes = [];
+    let match;
+
+    while ((match = includeRegex.exec(code)) !== null) {
+        includes.push({
+            directive: match[0],
+            fileName: match[1]
+        });
+    }
+
+    if (includes.length === 0) {
+        return code;
+    }
+
+    let processedCode = code;
+
+    for (const include of includes) {
+        const filePath = basePath + include.fileName;
+        try {
+            const resp = await fetch(filePath, { cache: "no-store" });
+            if (resp.ok) {
+                let includedCode = await resp.text();
+                const recursivelyProcessed = await preprocessIncludes(includedCode, basePath);
+                processedCode = processedCode.replace(include.directive, recursivelyProcessed);
+            } else {
+                console.warn(`[AI Include] Failed to fetch ${filePath}`);
+                processedCode = processedCode.replace(include.directive, '');
+            }
+        } catch (error) {
+            console.error(`[AI Include] Error fetching ${filePath}:`, error);
+            processedCode = processedCode.replace(include.directive, '');
+        }
+    }
+
+    return processedCode;
+}
+
 async function loadCustomAI(id) {
   try {
     const resp = await fetch(`./_res_ai/${id}.js`, {
@@ -319,6 +364,8 @@ async function loadCustomAI(id) {
     }
 
     let code = await resp.text();
+    code = await preprocessIncludes(code);
+    
     const definedFunctions = [];
 
     const transformedCode = code
@@ -333,7 +380,6 @@ async function loadCustomAI(id) {
 
     const contextKeys = Object.keys(aiHelpers);
 
-    // blah refactor the whole namespacing shit and just pollute the global scope, for now do this
     const factoryBody = `
             let target = initialTarget;
 
@@ -345,6 +391,10 @@ async function loadCustomAI(id) {
             const stage_clear = gameInstance.stage_clear;
             const game = gameInstance;
             const mode = gameInstance.mode;
+            const stage_bound = mode == 4 ? gameInstance.Ie : bg_width;
+            const elapsed_time = gameInstance.elapsed_time;
+
+            const rand = (i) => FouV._.Bt(0, i);
 
             const loadTarget = (index) => {
                 target = gameInstance.objects[index];
