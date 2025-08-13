@@ -188,7 +188,9 @@ const getProxiedObject = (() => {
           }
         } else if (prop === "bdefend") {
           if (obj) {
-            const bdefendValue = obj.bdefend !== undefined ? obj.bdefend : obj.bdefend_counter;
+            const obj_bdefend = obj[nameMap['bdefend']];
+            const obj_bdefend_counter = obj[nameMap['bdefend_counter']];
+            const bdefendValue = obj_bdefend !== undefined ? obj_bdefend : obj_bdefend_counter;
             return bdefendValue;
           }
         }
