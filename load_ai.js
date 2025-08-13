@@ -382,17 +382,22 @@ async function loadCustomAI(id) {
 
     const factoryBody = `
             let target = initialTarget;
+            let q, bg_zwidth1, bg_zwidth2, bg_width, difficulty, stage_clear, game, mode, stage_bound, elapsed_time;
 
-            const q = gameInstance.Ct;
-            const bg_zwidth1 = T7ES.vt[q].li;
-            const bg_zwidth2 = T7ES.vt[q].ri;
-            const bg_width = T7ES.vt[q].w;
-            const difficulty = gameInstance.difficulty;
-            const stage_clear = gameInstance.stage_clear;
-            const game = gameInstance;
-            const mode = gameInstance.mode;
-            const stage_bound = mode == 4 ? gameInstance.Ie : bg_width;
-            const elapsed_time = gameInstance.elapsed_time;
+            const updateGlobals = () => {
+                q = gameInstance.Ct;
+                bg_zwidth1 = T7ES.vt[q].li;
+                bg_zwidth2 = T7ES.vt[q].ri;
+                bg_width = T7ES.vt[q].w;
+                difficulty = gameInstance.difficulty;
+                stage_clear = gameInstance.stage_clear;
+                game = gameInstance;
+                mode = gameInstance.mode;
+                stage_bound = mode == 4 ? gameInstance.Ie : bg_width;
+                elapsed_time = gameInstance.elapsed_time;
+            };
+            
+            updateGlobals();
 
             const rand = (i) => FouV._.Bt(0, i);
 
@@ -407,7 +412,7 @@ async function loadCustomAI(id) {
 
             ${transformedCode}
             
-            return { setTarget, ${definedFunctions.join(", ")} };
+            return { setTarget, updateGlobals, ${definedFunctions.join(", ")} };
         `;
 
     const factory = new Function(
@@ -463,6 +468,7 @@ function runAIFunction(
     aiInfo.executionCache.set(selfEntity, aiInstance);
   } else {
     aiInstance.setTarget(targetEntity);
+    aiInstance.updateGlobals();
   }
 
   const aiFunction = aiInstance[functionName];
