@@ -145,6 +145,8 @@ const nameMap = {
 
   elapsed_time: "Li",
   weapon_held: "V1",
+
+  source_id: 'Tc',
 };
 
 const getProxiedObject = (() => {
@@ -485,9 +487,16 @@ function runAIFunction(
 
 TI2f = function (t, i) {
   const id = t.qt[i].q.id;
-  const aiInfo = customAIs[id];
+  const source_id = t.qt[i].Tc;
 
-  if (aiInfo && aiInfo.definedFunctions.includes("id")) {
+  let aiInfo = customAIs[id];
+  let functionName = 'id';
+  if (source_id && customAIs[source_id] && customAIs[source_id].definedFunctions.includes('source_id')) {
+    aiInfo = customAIs[source_id];
+    functionName = 'source_id';
+  }
+
+  if (aiInfo && aiInfo.definedFunctions.includes(functionName)) {
     try {
       const proxiedGameInstance = getProxiedObject(t, nameMap);
       const selfEntity = proxiedGameInstance.objects[i];
@@ -497,14 +506,19 @@ TI2f = function (t, i) {
         return originalTI2f.apply(this, arguments);
       }
 
-      return runAIFunction(
+      const ret = runAIFunction(
         aiInfo,
-        "id",
+        functionName,
         proxiedGameInstance,
         selfEntity,
         targetEntity,
         arguments
       );
+      if (ret == -1) {
+        return originalTI2f.apply(this, arguments);
+      }
+      return ret;
+      
     } catch (error) {
       console.error(`Error in custom AI (id) for entity ${id}:`, error);
       return;
