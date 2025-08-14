@@ -356,6 +356,8 @@ async function preprocessIncludes(code, basePath = './_res_ai/') {
 }
 
 async function loadCustomAI(id) {
+  if (!DEBUG_AI && customAIs[id] !== undefined) return;
+
   try {
     const resp = await fetch(`./_res_ai/${id}.js`, {
       cache: "no-store",
