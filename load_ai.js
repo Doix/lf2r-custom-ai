@@ -147,6 +147,8 @@ const nameMap = {
   weapon_held: "V1",
 
   source_id: 'Tc',
+  dark_hp: 'hi',
+  heal: 'yd',
 };
 
 const getProxiedObject = (() => {
@@ -489,39 +491,48 @@ TI2f = function (t, i) {
   const id = t.qt[i].q.id;
   const source_id = t.qt[i].Tc;
 
-  let aiInfo = customAIs[id];
-  let functionName = 'id';
-  if (source_id && customAIs[source_id] && customAIs[source_id].definedFunctions.includes('source_id')) {
-    aiInfo = customAIs[source_id];
-    functionName = 'source_id';
-  }
+  const attempts = [
+    { key: source_id, name: 'source_id' },
+    { key: id, name: 'id' }
+  ];
 
-  if (aiInfo && aiInfo.definedFunctions.includes(functionName)) {
-    try {
-      const proxiedGameInstance = getProxiedObject(t, nameMap);
-      const selfEntity = proxiedGameInstance.objects[i];
-      const targetEntity = undefined;
+  let proxiedGameInstance = null;
+  let selfEntity = null;
 
-      if (!selfEntity) {
-        return originalTI2f.apply(this, arguments);
+  for (const attempt of attempts) {
+    if (!attempt.key) {
+      continue;
+    }
+    
+    const aiInfo = customAIs[attempt.key];
+
+    if (aiInfo && aiInfo.definedFunctions.includes(attempt.name)) {
+      try {
+        if (!proxiedGameInstance) {
+          proxiedGameInstance = getProxiedObject(t, nameMap);
+          selfEntity = proxiedGameInstance.objects[i];
+        }
+
+        if (!selfEntity) {
+          break;
+        }
+
+        const result = runAIFunction(
+          aiInfo,
+          attempt.name,
+          proxiedGameInstance,
+          selfEntity,
+          undefined,
+          arguments
+        );
+        
+        if (result !== -1) {
+          return result;
+        }
+      } catch (error) {
+        console.error(`Error in custom AI (${attempt.name}) for entity ${attempt.key}:`, error);
+        return;
       }
-
-      const ret = runAIFunction(
-        aiInfo,
-        functionName,
-        proxiedGameInstance,
-        selfEntity,
-        targetEntity,
-        arguments
-      );
-      if (ret == -1) {
-        return originalTI2f.apply(this, arguments);
-      }
-      return ret;
-      
-    } catch (error) {
-      console.error(`Error in custom AI (id) for entity ${id}:`, error);
-      return;
     }
   }
 
