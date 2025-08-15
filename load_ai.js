@@ -389,6 +389,7 @@ async function loadCustomAI(id) {
     const contextKeys = Object.keys(aiHelpers);
 
     const factoryBody = `
+            const clr = () => {};
             let target = initialTarget;
             let q, bg_zwidth1, bg_zwidth2, bg_width, difficulty, stage_clear, game, mode, stage_bound, elapsed_time;
 
