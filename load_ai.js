@@ -1,154 +1,149 @@
-const DEBUG_AI = 0;
+const DEBUG_AI = 1;
+const loadDataIdentifier = "r0";
 
 const nameMap = {
-  objects: "qt",
-  data: "q",
-  exists: "Pt",
-
-  up: "dt",
-  down: "A0",
-  J: "ft",
-  D: "o1",
   A: "attack",
-  holding_up: "qi",
-  holding_down: "t1",
-  holding_left: "i1",
-  holding_right: "e1",
-  holding_a: "ti",
-  holding_j: "s1",
-  holding_d: "h1",
-
-  DrJ: "B1",
-  Dlj: "M1",
-  DuJ: "T1",
-  DdJ: "L1",
-  DrA: "v1",
-  DlA: "A1",
-  DuA: "I1",
-  DdA: "X1",
-  DJA: "C1",
-
-  frame: "Cc",
-  frame1: "Cc",
-  team: "group",
-  frames: "f",
-
-  aaction: "Yh",
-  act: "Ni",
+  D: "b1",
+  DJA: "H1",
+  DdA: "J1",
+  DdJ: "Z1",
+  DlA: "O1",
+  DlJ: "G1",
+  DrA: "Q1",
+  DrJ: "R1",
+  DuA: "W1",
+  DuJ: "P1",
+  J: "Mt",
+  aaction: "jh",
+  act: "ji",
   action: "action",
-  arest: "Fh",
-  attacking: "Ph",
-  backhurtact: "Hh",
-  bdefend: "yh",
-  centerx: "do",
-  centery: "uo",
-  cover: "Ch",
-  daction: "xh",
-  dash_distance: "Ro",
-  dash_distancez: "Wo",
-  dash_height: "Zo",
-  decrease: "Qh",
-  default_centerx: "$h",
-  default_centery: "qh",
-  dircontrol: "Oh",
-  dvx: "mh",
-  dvy: "Sh",
-  dvz: "Kh",
+  arest: "Ah",
+  attacking: "ca",
+  backgrounds: "Jt",
+  backhurtact: "oa",
+  bdefend: "xh",
+  bdefend_counter: "Md",
+  bdy_count: "Xa",
+  bdys: "Ca",
+  blink: "bi",
+  centerx: "Da",
+  centery: "Va",
+  clone: "parent",
+  cover: "Qh",
+  ctimer: "Dd",
+  current_background: "Pt",
+  daction: "qh",
+  dark_hp: "pi",
+  dash_distance: "io",
+  dash_distancez: "eo",
+  dash_height: "qa",
+  data: "t0",
+  decrease: "na",
+  default_centerx: "ua",
+  default_centery: "fa",
+  difficulty: "Ht",
+  dircontrol: "ra",
+  down: "Y0",
+  dvx: "Th",
+  dvy: "Ch",
+  dvz: "da",
   effect: "effect",
-  facing: "Ri",
-  fall: "bh",
-  fronthurtact: "Jh",
-  h: "ih",
-  heavy_running_speed: "Yo",
-  heavy_running_speedz: "Uo",
-  heavy_walking_speed: "vo",
-  heavy_walking_speedz: "Ao",
-  hit_Da: "ao",
-  hit_Dj: "lo",
-  hit_Fa: "Ui",
-  hit_Fj: "no",
-  hit_Ua: "oo",
-  hit_Uj: "ro",
-  hit_a: "so",
-  hit_d: "ho",
-  hit_j: "Y1",
-  hit_ja: "co",
-  hp: "oi",
-  hurtable: "Wh",
-  injury: "Vh",
-  jaction: "Uh",
+  elapsed_time: "zi",
+  exists: "ri",
+  facing: "t1",
+  fall: "Xh",
+  frame: "Oc",
+  frame1: "Oc",
+  frames: "f",
+  fronthurtact: "aa",
+  gameInstance: "_",
+  h: "_h",
+  heal: "Rd",
+  heavy_running_speed: "Qa",
+  heavy_running_speedz: "Oa",
+  heavy_walking_speed: "Ja",
+  heavy_walking_speedz: "Ha",
+  hit_Da: "ba",
+  hit_Dj: "wa",
+  hit_Fa: "Oi",
+  hit_Fj: "Fa",
+  hit_Ua: "Sa",
+  hit_Uj: "Ea",
+  hit_a: "pa",
+  hit_d: "ma",
+  hit_j: "j1",
+  hit_ja: "ya",
+  holding_a: "ui",
+  holding_d: "S1",
+  holding_down: "f1",
+  holding_j: "m1",
+  holding_left: "g1",
+  holding_right: "_1",
+  holding_up: "u1",
+  hp: "mi",
+  hurtable: "sa",
+  injury: "Nh",
+  itr_count: "Ta",
+  itrs: "Ia",
+  jaction: "Kh",
   join: "join",
-  jump_distance: "xo",
-  jump_distancez: "zo",
-  jump_height: "No",
+  jump_distance: "Ka",
+  jump_distancez: "$a",
+  jump_height: "ja",
   kind: "kind",
-  mp: "ei",
+  left: "left",
+  max_hp: "_i",
+  mode: "c1",
+  mp: "gi",
   next: "next",
-  oid: "Xh",
-  pic: "io",
-  pickedact: "Th",
-  pickingact: "Ih",
+  num: "index",
+  objects: "di",
+  oid: "Hh",
+  pic: "ga",
+  pickedact: "Jh",
+  pickingact: "Ph",
+  rand: "xt",
   ratio: "ratio",
-  reserve: "bn",
-  resized: "wt",
-  respond: "wh",
-  rowing_distance: "Jo",
-  rowing_height: "Go",
-  running_frame_rate: "To",
-  running_speed: "Xo",
-  running_speedz: "Co",
+  reserve: "Xn",
+  resized: "vt",
+  respond: "Uh",
+  right: "right",
+  rowing_distance: "ho",
+  rowing_height: "so",
+  running_frame_rate: "Za",
+  running_speed: "Wa",
+  running_speedz: "Pa",
+  source_id: "Hc",
+  stage_bound: "Ze",
+  stage_clear: "d1",
   state: "state",
-  taction: "Nh",
-  times: "Sn",
-  upscale: "va",
-  vaction: "Ah",
-  vrest: "Eh",
+  taction: "$h",
+  team: "group",
+  times: "Cn",
+  up: "Vt",
+  upscale: "Qo",
+  vaction: "Oh",
+  vrest: "Yh",
   w: "w",
   wait: "wait",
-  walking_frame_rate: "Lo",
-  walking_speed: "ko",
-  walking_speedz: "Io",
-  weapon_drop_hurt: "Qo",
-  weapon_hp: "Ho",
-  weaponact: "jh",
-  when_clear_goto_phase: "mn",
+  walking_frame_rate: "za",
+  walking_speed: "Ra",
+  walking_speedz: "Ga",
+  weapon_drop_hurt: "oo",
+  weapon_held: "U1",
+  weapon_hp: "ao",
+  weapon_type: "X1",
+  weaponact: "la",
+  when_clear_goto_phase: "Tn",
   width: "w",
   x: "x",
+  x_velocity: "wi",
   y: "y",
-  zwidth: "Dh",
-
-  x_velocity: "xi",
-  y_velocity: "zi",
-  z_velocity: "Zi",
-
-  zwdith1: "li",
-  zwdith2: "ri",
-  num: "index",
-  blink: "ni",
-
-  ctimer: 'nd',
-  max_hp: 'si',
-  bdefend_counter: 'dd',
-
-  stage_clear: "$i",
-  difficulty: "At",
-
-  bdys: 'Fo',
-  bdy_count: 'Eo',
-
-  itrs: 'So',
-  itr_count: 'bo',
-
-  weapon_type: "b1",
-  mode: "Ki",
-  clone: "parent",
-
-  elapsed_time: "Li",
-  weapon_held: "V1",
-
-  source_id: 'Tc',
-  dark_hp: 'hi',
-  heal: 'yd',
+  y_velocity: "Di",
+  z_velocity: "yi",
+  zwidth: "zh",
+  zwidth1: "Ei",
+  zwidth2: "Fi"
 };
 
 const getProxiedObject = (() => {
@@ -389,26 +384,34 @@ async function loadCustomAI(id) {
     const contextKeys = Object.keys(aiHelpers);
 
     const factoryBody = `
-            const clr = () => {};
+            const clr = console.clear;
             let target = initialTarget;
-            let q, bg_zwidth1, bg_zwidth2, bg_width, difficulty, stage_clear, game, mode, stage_bound, elapsed_time;
+            let bg_zwidth1, bg_zwidth2, bg_width, difficulty, stage_clear, game, mode, stage_bound, elapsed_time;
 
             const updateGlobals = () => {
-                q = gameInstance.Ct;
-                bg_zwidth1 = T7ES.vt[q].li;
-                bg_zwidth2 = T7ES.vt[q].ri;
-                bg_width = T7ES.vt[q].w;
+
+                const backgrounds = nameMap.backgrounds;
+                const zwidth1 = nameMap.zwdith1;
+                const zwidth2 = nameMap.zwdith2;
+
+                const current_background = gameInstance.current_background;
+                bg_zwidth1 = T7ES[backgrounds][current_background][zwidth1];
+                bg_zwidth2 = T7ES[backgrounds][current_background][zwidth2];
+                bg_width = T7ES[backgrounds][current_background].w;
                 difficulty = gameInstance.difficulty;
                 stage_clear = gameInstance.stage_clear;
                 game = gameInstance;
                 mode = gameInstance.mode;
-                stage_bound = mode == 4 ? gameInstance.Ie : bg_width;
+                stage_bound = mode == 4 ? gameInstance.stage_bound : bg_width;
                 elapsed_time = gameInstance.elapsed_time;
             };
             
             updateGlobals();
 
-            const rand = (i) => FouV._.Bt(0, i);
+            const gameInstanceProp = nameMap.gameInstance;
+            const randProp = nameMap.rand;
+
+            const rand = (i) => FouV[gameInstanceProp][randProp](0, i);
 
             const loadTarget = (index) => {
                 target = gameInstance.objects[index];
@@ -443,14 +446,14 @@ async function loadCustomAI(id) {
   }
 }
 
-const originalN0 = TIJj.prototype.n0;
-TIJj.prototype.n0 = async function (...args) {
+const originalLoadFile = TIJj.prototype[loadDataIdentifier];
+TIJj.prototype[loadDataIdentifier] = async function (...args) {
   await loadCustomAI(this.id);
-  return await originalN0.apply(this, args);
+  return await originalLoadFile.apply(this, args);
 };
 
-const originalTI2f = TI2f;
-const originalCr0f = Cr0f;
+const originalIdAi = TI2f;
+const originalEgoAi = Cr0f;
 
 function runAIFunction(
   aiInfo,
@@ -489,15 +492,16 @@ function runAIFunction(
 }
 
 TI2f = function (t, i) {
-  const id = t.qt[i].q.id;
-  const source_id = t.qt[i].Tc;
+  const proxiedGameInstance = getProxiedObject(t, nameMap);
+
+  const id = proxiedGameInstance.objects[i].data.id;
+  const source_id = proxiedGameInstance.objects[i].source_id;
 
   const attempts = [
     { key: source_id, name: 'source_id' },
     { key: id, name: 'id' }
   ];
 
-  let proxiedGameInstance = null;
   let selfEntity = null;
 
   for (const attempt of attempts) {
@@ -509,10 +513,7 @@ TI2f = function (t, i) {
 
     if (aiInfo && aiInfo.definedFunctions.includes(attempt.name)) {
       try {
-        if (!proxiedGameInstance) {
-          proxiedGameInstance = getProxiedObject(t, nameMap);
-          selfEntity = proxiedGameInstance.objects[i];
-        }
+        selfEntity = proxiedGameInstance.objects[i];
 
         if (!selfEntity) {
           break;
@@ -537,21 +538,21 @@ TI2f = function (t, i) {
     }
   }
 
-  return originalTI2f.apply(this, arguments);
+  return originalIdAi.apply(this, arguments);
 };
 
 Cr0f = function (game, targetNum, objectNum, t, h, o, a, n, r, i) {
-  const entityId = game.qt[objectNum].q.id;
+  const proxiedGameInstance = getProxiedObject(game, nameMap);
+  const entityId = proxiedGameInstance.objects[objectNum].data.id;
   const aiInfo = customAIs[entityId];
 
   if (aiInfo && aiInfo.definedFunctions.includes("ego")) {
     try {
-      const proxiedGameInstance = getProxiedObject(game, nameMap);
       const selfEntity = proxiedGameInstance.objects[objectNum];
       const targetEntity = proxiedGameInstance.objects[targetNum];
 
       if (!selfEntity) {
-        return originalCr0f.apply(this, arguments);
+        return originalEgoAi.apply(this, arguments);
       }
 
       return runAIFunction(
@@ -568,5 +569,5 @@ Cr0f = function (game, targetNum, objectNum, t, h, o, a, n, r, i) {
     }
   }
 
-  return originalCr0f.apply(this, arguments);
+  return originalEgoAi.apply(this, arguments);
 };
