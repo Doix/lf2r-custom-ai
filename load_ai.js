@@ -505,10 +505,6 @@ TI2f = function (t, i) {
   let selfEntity = null;
 
   for (const attempt of attempts) {
-    if (!attempt.key) {
-      continue;
-    }
-    
     const aiInfo = customAIs[attempt.key];
 
     if (aiInfo && aiInfo.definedFunctions.includes(attempt.name)) {
