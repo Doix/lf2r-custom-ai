@@ -392,8 +392,8 @@ async function loadCustomAI(id) {
             const updateGlobals = () => {
 
                 const backgrounds = nameMap.backgrounds;
-                const zwidth1 = nameMap.zwdith1;
-                const zwidth2 = nameMap.zwdith2;
+                const zwidth1 = nameMap.zwidth1;
+                const zwidth2 = nameMap.zwidth2;
 
                 const current_background = gameInstance.current_background;
                 bg_zwidth1 = T7ES[backgrounds][current_background][zwidth1];
