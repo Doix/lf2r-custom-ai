@@ -1,6 +1,6 @@
 const DEBUG_AI = 1;
-
 const loadDataIdentifier = "l0";
+
 const nameMap = {
   A: "attack",
   D: "Hs",
@@ -32,6 +32,7 @@ const nameMap = {
   cover: "Wo",
   ctimer: "$u",
   current_background: "Ve",
+  current_stage: "Za",
   daction: "Qo",
   dark_hp: "Qe",
   dash_distance: "Kn",
@@ -386,7 +387,7 @@ async function loadCustomAI(id) {
     const factoryBody = `
             const clr = console.clear;
             let target = initialTarget;
-            let bg_zwidth1, bg_zwidth2, bg_width, difficulty, stage_clear, game, mode, stage_bound, elapsed_time;
+            let bg_zwidth1, bg_zwidth2, bg_width, difficulty, stage_clear, game, mode, stage_bound, elapsed_time, current_stage;
 
             const updateGlobals = () => {
 
@@ -404,6 +405,7 @@ async function loadCustomAI(id) {
                 mode = gameInstance.mode;
                 stage_bound = mode == 4 ? gameInstance.stage_bound : bg_width;
                 elapsed_time = gameInstance.elapsed_time;
+                current_stage = gameInstance.current_stage;
             };
             
             updateGlobals();
