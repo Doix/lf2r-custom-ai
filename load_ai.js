@@ -138,10 +138,10 @@ const nameMap = {
   when_clear_goto_phase: "C2",
   width: "w",
   x: "x",
-  x_velocity: "es",
+  x_velocity: "ks",
   y: "y",
-  y_velocity: "hs",
-  z_velocity: "ss",
+  y_velocity: "Is",
+  z_velocity: "Ts",
   zwidth: "xo",
   zwidth1: "ts",
   zwidth2: "qe"
